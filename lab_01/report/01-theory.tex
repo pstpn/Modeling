@@ -1,0 +1,41 @@
+\chapter{Теоретическая часть}
+
+\section{Равномерное распределение}
+
+Случайная величина $X$ имеет равномерное распределение на отрезке $[a; b]$, если её функция плотности распределения~$f(x)$ имеет вид:
+\begin{equation}
+	f(x) =
+	\begin{cases}
+		\frac{1}{b - a}, & \quad x \in [a; b]\\
+		0,  & \quad \text{иначе}.
+	\end{cases}
+\end{equation}
+
+Функция распределения $F(x)$ равна:
+\begin{equation}
+	F(x) =
+	\begin{cases}
+		0, & \quad x < a \\
+		\frac{x - a}{b - a}, & \quad a \le x \le b \\
+		1,  & \quad x > b.
+	\end{cases}
+\end{equation}
+
+Обозначается $X \sim R[a; b]$.
+
+\section{Нормальное распределение}
+
+Cлучайная величина $X$ имеет нормальное распределение с параметрами~$\mu$~и~$\sigma$, если ее функция плотности распределения~$f(x)$ имеет вид:
+\begin{equation}
+	f(x) = \frac{1}{\sigma \cdot \sqrt{2\pi}}~~e^{\displaystyle-\frac{(x -
+			\mu)^2}{2\sigma^2}}, \quad x \in \mathbb{R}, \sigma > 0.
+\end{equation}
+
+При этом функция распределения~$F(x)$ равна:
+
+\begin{equation}
+	F(x) = \frac{1}{\sigma \cdot \sqrt{2\pi}} \int\limits_{-\infty}^{x}
+	e^{\displaystyle-\frac{(t - \mu)^2}{2\sigma^2}} dt.
+\end{equation}
+
+Обозначается $X \sim N(\mu, \sigma^2)$.

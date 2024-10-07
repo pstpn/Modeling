@@ -21,3 +21,15 @@
 go.work
 .idea
 .DS_Store
+*.svg
+
+# Tex
+*.aux
+*.bbl
+*.log
+*.bcf
+*.blg
+*.xml
+*.gz
+*.toc
+*.zip
