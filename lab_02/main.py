@@ -25,14 +25,17 @@ def calculate_stabilization_time(intensity_matrix, steady_state):
     initial_state = np.zeros(len(steady_state))
     initial_state[0] = 1
 
-    time = np.linspace(0, 100, 1000)
+    time = np.linspace(0, 10, 100)
 
     solution = np.transpose(odeint(system, initial_state, time, args=(intensity_matrix,)))
 
     stabilization_times = [-1 for _ in range(len(steady_state))]
 
+    plt.xlabel("Время, t")
+    plt.ylabel("Значение вероятности, P")
     for i in range(len(steady_state)):
-        plt.plot(time, solution[i])
+        plt.plot(time, solution[i], label=f"P{i}(t)")
+    plt.legend()
     plt.show()
 
     for i in range(len(steady_state)):
