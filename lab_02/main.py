@@ -29,22 +29,12 @@ def calculate_stabilization_time(intensity_matrix, steady_state):
 
     solution = np.transpose(odeint(system, initial_state, time, args=(intensity_matrix,)))
 
-    stabilization_times = [-1 for _ in range(len(steady_state))]
-
     plt.xlabel("Время, t")
     plt.ylabel("Значение вероятности, P")
     for i in range(len(steady_state)):
         plt.plot(time, solution[i], label=f"P{i}(t)")
     plt.legend()
     plt.show()
-
-    for i in range(len(steady_state)):
-        for j in range(len(solution[i]) - 1, -1, -1):
-            if np.abs(solution[i][j] - steady_state[i]) > 0.01:
-                stabilization_times[i] = time[j]
-                break
-
-    return stabilization_times
 
 
 class SteadyStateCalculator(QtWidgets.QWidget):
@@ -140,12 +130,16 @@ class SteadyStateCalculator(QtWidgets.QWidget):
             for j in range(num_states):
                 intensity_matrix[i, j] = float(self.matrix_entries[i][j].text().replace(",", "."))
 
+        m = copy.deepcopy(intensity_matrix)
+
         for i in range(num_states):
             intensity_matrix[i, i] = -np.sum(intensity_matrix[i]) + intensity_matrix[i, i]
 
         try:
             steady_state_probabilities = calculate_steady_state(intensity_matrix)
-            stabilization_times = calculate_stabilization_time(intensity_matrix, steady_state_probabilities)
+            calculate_stabilization_time(intensity_matrix, steady_state_probabilities)
+            stabilization_times = m.sum(axis=0) - m.diagonal()
+            stabilization_times = steady_state_probabilities / stabilization_times
         except np.linalg.LinAlgError:
             QtWidgets.QMessageBox.critical(self, "Ошибка", "Заданы некорректные значения.")
             return
