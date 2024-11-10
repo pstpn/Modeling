@@ -33,3 +33,5 @@ go.work
 *.gz
 *.toc
 *.zip
+
+*/data
