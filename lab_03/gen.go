@@ -8,7 +8,7 @@ import (
 )
 
 func gen() {
-	file, err := os.Create("table_data.txt")
+	file, err := os.Create("data/table_data.txt")
 	if err != nil {
 		fmt.Println("Ошибка при создании файла:", err)
 		return
@@ -16,7 +16,7 @@ func gen() {
 	defer file.Close()
 
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 1000; i++ { // Создаем 1000 случайных чисел
+	for i := 0; i < 1000000; i++ {
 		_, err := file.WriteString(fmt.Sprintf("%f\n", rand.Float32()))
 		if err != nil {
 			fmt.Println("Ошибка при записи в файл:", err)

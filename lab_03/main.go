@@ -24,180 +24,182 @@ func main() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Генератор случайных чисел")
 	myWindow.Resize(fyne.Size{
-		Width:  1080,
-		Height: 500,
+		Width:  800,
+		Height: 600,
 	})
 
-	mainMenu := container.NewVBox()
 	resultContainer := container.NewVBox()
 	metricsLabel := widget.NewLabel("")
 
-	itemsPerPage := 100
-
-	methodLabel := widget.NewLabel("Выберите метод генерации:")
-	methodOptions := widget.NewSelect([]string{"Табличный", "Алгоритмический"}, func(value string) {})
-	methodOptions.Selected = "Табличный"
-
-	countLabel := widget.NewLabel("Введите количество элементов:")
-	countEntry := widget.NewEntry()
-	countEntry.SetPlaceHolder("Введите число")
+	userInputEntries := createUserInputTable()
 
 	generateButton := widget.NewButton("Сгенерировать", func() {
-		currentPage := 0
+		sequenceTable1 := generateTableSequence(10, 1)
+		sequenceTable2 := generateTableSequence(10, 2)
+		sequenceTable3 := generateTableSequence(10, 3)
 
-		count := 0
-		fmt.Sscanf(countEntry.Text, "%d", &count)
-		if count < 1 {
-			fyne.LogError("некорректное количество", fmt.Errorf("некорректное кол-во"))
-			return
-		}
+		sequenceAlg1 := generateAlgorithmicSequence(10, 1)
+		sequenceAlg2 := generateAlgorithmicSequence(10, 2)
+		sequenceAlg3 := generateAlgorithmicSequence(10, 3)
 
-		var sequence []float32
-		if methodOptions.Selected == "Табличный" {
-			sequence = generateTableSequence(count)
-		} else {
-			sequence = generateAlgorithmicSequence(count)
-		}
+		userSequence := getUserInput(userInputEntries)
 
-		totalPages := (len(sequence) + itemsPerPage - 1) / itemsPerPage
-		updateTable := func() {
-			start := currentPage * itemsPerPage
-			end := start + itemsPerPage
-			if end > len(sequence) {
-				end = len(sequence)
-			}
-			pageData := sequence[start:end]
-			resultContainer.Objects = formatSequenceAsTable(pageData, 10)
-			resultContainer.Refresh()
-		}
+		tableResults := formatSequenceAsTable(sequenceTable1, sequenceTable2, sequenceTable3, "Табличный метод")
+		algResults := formatSequenceAsTable(sequenceAlg1, sequenceAlg2, sequenceAlg3, "Алгоритмический метод")
 
-		backButton := widget.NewButton("Вернуться в меню", func() {
-			metricsLabel.Hide()
-			myWindow.SetContent(mainMenu)
-		})
+		resultContainer.Objects = []fyne.CanvasObject{tableResults, algResults}
+		resultContainer.Refresh()
 
-		updateTable()
-		metricsLabel.Show()
-		metricsLabel.SetText(fmt.Sprintf("Метрики:\n\nСреднее: %.4f\nДисперсия: %.4f\nСтандартное отклонение: %.4f\nМин: %.4f\nМакс: %.4f\nРазмах: %.4f\n\n\n\nСтраница: %d из %d",
-			mean(sequence), variance(sequence), stdDev(sequence), min(sequence), max(sequence), max(sequence)-min(sequence), currentPage+1, totalPages))
-
-		myWindow.SetContent(container.NewBorder(
-			nil, backButton, nil, metricsLabel, resultContainer,
-		))
-
-		myWindow.Canvas().SetOnTypedKey(func(key *fyne.KeyEvent) {
-			if key.Name == fyne.KeyRight && currentPage < totalPages-1 {
-				currentPage++
-				updateTable()
-			} else if key.Name == fyne.KeyLeft && currentPage > 0 {
-				currentPage--
-				updateTable()
-			}
-
-			metricsLabel.SetText(fmt.Sprintf("Метрики:\n\nСреднее: %.4f\nДисперсия: %.4f\nСтандартное отклонение: %.4f\nМин: %.4f\nМакс: %.4f\nРазмах: %.4f\n\n\n\nСтраница: %d из %d",
-				mean(sequence), variance(sequence), stdDev(sequence), min(sequence), max(sequence), max(sequence)-min(sequence), currentPage+1, totalPages))
-		})
+		metricsLabel.SetText(fmt.Sprintf("Метрика колебаний последовательности:\n\nТабличный метод:\n0-9:     %.4f\n0-99:   %.4f\n0-999: %.4f\n\nАлгоритмический метод:\n0-9:     %.4f\n0-99:   %.4f\n0-999: %.4f\n\nПользовательская таблица:\n\n %.4f",
+			calculateFluctuationMetric(sequenceTable1), calculateFluctuationMetric(sequenceTable2), calculateFluctuationMetric(sequenceTable3),
+			calculateFluctuationMetric(sequenceAlg1), calculateFluctuationMetric(sequenceAlg2), calculateFluctuationMetric(sequenceAlg3),
+			calculateFluctuationMetric(userSequence)))
 	})
 
-	mainMenu.Add(methodLabel)
-	mainMenu.Add(methodOptions)
-	mainMenu.Add(countLabel)
-	mainMenu.Add(countEntry)
-	mainMenu.Add(generateButton)
-	mainMenu.Add(metricsLabel)
-
-	myWindow.SetContent(mainMenu)
+	myWindow.SetContent(container.NewVBox(
+		container.NewHBox(resultContainer, metricsLabel),
+		container.NewVBox(widget.NewLabel("Пользовательская таблица:"), container.NewGridWithColumns(10, convertToCanvasObjects(userInputEntries)...)),
+		generateButton,
+	))
 
 	myWindow.ShowAndRun()
 }
 
-func formatSequenceAsTable(sequence []float32, columns int) []fyne.CanvasObject {
-	var labels []fyne.CanvasObject
-	for _, num := range sequence {
-		label := widget.NewLabel(fmt.Sprintf("%.4f", num))
-		labels = append(labels, label)
+func convertToCanvasObjects(entries []*widget.Entry) []fyne.CanvasObject {
+	var objects []fyne.CanvasObject
+	for _, entry := range entries {
+		objects = append(objects, entry)
 	}
-	return []fyne.CanvasObject{container.NewGridWithColumns(columns, labels...)}
+	return objects
 }
 
-func generateTableSequence(count int) []float32 {
+func createUserInputTable() []*widget.Entry {
+	entries := make([]*widget.Entry, 10)
+	for i := 0; i < 10; i++ {
+		entry := widget.NewEntry()
+		entry.SetText("0")
+		entries[i] = entry
+	}
+	return entries
+}
+
+func getUserInput(entries []*widget.Entry) []int {
+	var values []int
+	for _, entry := range entries {
+		val, err := strconv.Atoi(entry.Text)
+		if err != nil {
+			val = 0
+		}
+		values = append(values, val)
+	}
+	return values
+}
+
+func formatSequenceAsTable(seq1, seq2, seq3 []int, title string) *fyne.Container {
+	label := widget.NewLabel(title)
+	table1 := container.NewGridWithColumns(10, formatAsLabels(seq1)...)
+	table2 := container.NewGridWithColumns(10, formatAsLabels(seq2)...)
+	table3 := container.NewGridWithColumns(10, formatAsLabels(seq3)...)
+	return container.NewVBox(label, table1, table2, table3)
+}
+
+func formatAsLabels(sequence []int) []fyne.CanvasObject {
+	var labels []fyne.CanvasObject
+	for _, num := range sequence {
+		labels = append(labels, widget.NewLabel(fmt.Sprintf("%d", num)))
+	}
+	return labels
+}
+
+func generateTableSequence(count int, n int) []int {
 	file, err := os.Open("/Users/stepa/Study/Modeling/lab_03/data/table_data.txt")
 	if err != nil {
 		fmt.Println("Ошибка при открытии файла:", err)
 		return nil
 	}
 	defer file.Close()
+	posFile, err := os.Open("/Users/stepa/Study/Modeling/lab_03/data/pos.txt")
+	if err != nil {
+		fmt.Println("Ошибка при открытии файла:", err)
+		return nil
+	}
+	defer posFile.Close()
 
-	var sequence []float32
+	var index int
+	_, err = fmt.Fscanf(posFile, "%d", &index)
+	if err != nil {
+		fmt.Println("Ошибка при открытии файла:", err)
+		return nil
+	}
+
+	var sequence []int
 	scanner := bufio.NewScanner(file)
-	for scanner.Scan() && len(sequence) < count {
+	for scanner.Scan() {
 		num, err := strconv.ParseFloat(scanner.Text(), 32)
 		if err == nil {
-			sequence = append(sequence, float32(num)) // Масштабируем в диапазон [0, 1]
+			sequence = append(sequence, int(num*math.Pow10(n)))
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
+	if err = scanner.Err(); err != nil {
 		fmt.Println("Ошибка при чтении файла:", err)
 	}
 
-	return sequence
+	res := make([]int, count)
+	for i := range count {
+		if index+6 >= len(sequence) {
+			index %= 100
+		}
+		index += 6
+
+		res[i] = sequence[index]
+	}
+
+	err = os.WriteFile("/Users/stepa/Study/Modeling/lab_03/data/pos.txt", []byte(strconv.Itoa(index)), 0777)
+	if err != nil {
+		fmt.Println("Ошибка при записи в файл:", err)
+	}
+
+	return res
 }
 
-func generateAlgorithmicSequence(count int) []float32 {
-	sequence := make([]float32, count)
+func generateAlgorithmicSequence(count, n int) []int {
+	sequence := make([]int, count)
 
 	seed := uint32(time.Now().UnixNano() % int64(defaultMod))
-
 	for i := 0; i < count; i++ {
 		seed = uint32(int64(defaultK*seed+defaultC) % defaultMod)
-		sequence[i] = float32(seed) / float32(defaultMod)
+		sequence[i] = int(float32(seed) / float32(defaultMod) * float32(math.Pow10(n)))
 	}
 
 	return sequence
 }
 
-func mean(sequence []float32) float32 {
-	sum := float32(0)
+func calculateFluctuationMetric(sequence []int) float64 {
+	var differences []float64
+	for i := 1; i < len(sequence); i++ {
+		diff := math.Abs(float64(sequence[i] - sequence[i-1]))
+		differences = append(differences, diff)
+	}
+	meanDiff := mean(differences)
+
+	absDeviations := make([]float64, len(differences))
+	for i, diff := range differences {
+		absDeviations[i] = math.Abs(diff - meanDiff)
+	}
+	meanAbsDeviation := mean(absDeviations)
+
+	if meanDiff == 0 {
+		return 0
+	}
+	metric := meanAbsDeviation / meanDiff
+	return metric
+}
+
+func mean(sequence []float64) float64 {
+	sum := 0.0
 	for _, num := range sequence {
 		sum += num
 	}
-	return sum / float32(len(sequence))
-}
-
-func variance(sequence []float32) float32 {
-	m := mean(sequence)
-	var sum float32
-	for _, num := range sequence {
-		sum += (num - m) * (num - m)
-	}
-	return sum / float32(len(sequence))
-}
-
-func stdDev(sequence []float32) float32 {
-	return sqrt(variance(sequence))
-}
-
-func sqrt(value float32) float32 {
-	return float32(math.Sqrt(float64(value)))
-}
-
-func min(sequence []float32) float32 {
-	m := sequence[0]
-	for _, num := range sequence {
-		if num < m {
-			m = num
-		}
-	}
-	return m
-}
-
-func max(sequence []float32) float32 {
-	m := sequence[0]
-	for _, num := range sequence {
-		if num > m {
-			m = num
-		}
-	}
-	return m
+	return sum / float64(len(sequence))
 }
