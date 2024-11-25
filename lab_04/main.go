@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"slices"
 	"strconv"
 
 	"fyne.io/fyne/v2"
@@ -62,39 +63,35 @@ func stepModel(generator *UniformDistribution, processor *NormalDistribution, co
 	return maxQueueLen
 }
 
+type event struct {
+	time  float64
+	event string
+}
+
 func eventModel(generator *UniformDistribution, processor *NormalDistribution, count int, repeatProb float64) int {
 	tasksDone := 0
 	curQueueLen := 0
 	maxQueueLen := 0
 	countGen := 1
 	free := true
-	events := []struct {
-		time  float64
-		event string
-	}{{time: generator.Generate(), event: "generate"}}
+	processFlag := false
+	events := []event{{time: generator.Generate(), event: "generate"}}
 
 	for countGen < count {
-		event := events[0]
+		ev := events[0]
 		events = events[1:]
 
-		switch event.event {
+		switch ev.event {
 		case "generate":
 			curQueueLen++
 			if curQueueLen > maxQueueLen {
 				maxQueueLen = curQueueLen
 			}
-			events = append(events, struct {
-				time  float64
-				event string
-			}{time: event.time + generator.Generate(), event: "generate"})
+			events = addEvent(events, event{time: ev.time + generator.Generate(), event: "generate"})
 			countGen++
 
 			if free {
-				events = append(events, struct {
-					time  float64
-					event string
-				}{time: event.time + processor.Generate(), event: "process"})
-				free = false
+				processFlag = true
 			}
 
 		case "process":
@@ -102,18 +99,37 @@ func eventModel(generator *UniformDistribution, processor *NormalDistribution, c
 			if rand.Float64()*100 <= repeatProb {
 				curQueueLen++
 			}
+			processFlag = true
+		}
+
+		if processFlag {
 			if curQueueLen > 0 {
 				curQueueLen--
-				events = append(events, struct {
-					time  float64
-					event string
-				}{time: event.time + processor.Generate(), event: "process"})
+				events = addEvent(events, event{time: ev.time + processor.Generate(), event: "process"})
+				free = false
 			} else {
 				free = true
 			}
+
+			processFlag = false
 		}
 	}
 	return maxQueueLen
+}
+
+func addEvent(events []event, ev event) []event {
+	i := 0
+	for i < len(events) && events[i].time < ev.time {
+		i++
+	}
+
+	if 0 < i && i < len(events) {
+		events = slices.Insert(events, i-1, ev)
+	} else {
+		events = slices.Insert(events, i, ev)
+	}
+
+	return events
 }
 
 func main() {
