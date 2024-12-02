@@ -135,7 +135,7 @@ func main() {
 		messageList.RemoveAll()
 		messageList.Refresh()
 		go func() {
-			probability := simulateRequests(10, updateStatus)
+			probability := simulateRequests(300, updateStatus)
 			updateStatus(fmt.Sprintf("\nВероятность отказа: %.2f%%", probability*100))
 		}()
 	})
