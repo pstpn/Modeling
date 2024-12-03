@@ -29,19 +29,17 @@ type Computer struct {
 
 func simulateRequests(totalClients int, updateStatus func(string)) float64 {
 	wg := &sync.WaitGroup{}
-	opMutex := &sync.Mutex{}
-	compMutex := &sync.Mutex{}
 	mutex := &sync.Mutex{}
 
 	operators := []Operator{
-		{ID: 1, MinTime: 150, MaxTime: 250, Mutex: opMutex},
-		{ID: 2, MinTime: 300, MaxTime: 500, Mutex: opMutex},
-		{ID: 3, MinTime: 200, MaxTime: 600, Mutex: opMutex},
+		{ID: 1, MinTime: 150, MaxTime: 250, Mutex: &sync.Mutex{}},
+		{ID: 2, MinTime: 300, MaxTime: 500, Mutex: &sync.Mutex{}},
+		{ID: 3, MinTime: 200, MaxTime: 600, Mutex: &sync.Mutex{}},
 	}
 
 	computers := []Computer{
-		{ID: 1, ProcessTime: 150, Mutex: compMutex},
-		{ID: 2, ProcessTime: 300, Mutex: compMutex},
+		{ID: 1, ProcessTime: 150, Mutex: &sync.Mutex{}},
+		{ID: 2, ProcessTime: 300, Mutex: &sync.Mutex{}},
 	}
 
 	var servedClients int
