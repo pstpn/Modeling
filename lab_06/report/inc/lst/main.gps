@@ -1,0 +1,10 @@
+              GENERATE (UNIFORM(1,5,7))
+ProcessClient QUEUE WaitQueue
+	          SEIZE Operator
+	          DEPART WaitQueue
+	          ADVANCE(NORMAL(1,5,1))
+	          RELEASE Operator
+	          TRANSFER 0.5,Finish,ProcessClient
+Finish        TERMINATE 1
+
+	          START 1000s
