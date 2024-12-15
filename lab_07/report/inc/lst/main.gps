@@ -1,0 +1,36 @@
+               GENERATE 10,2
+FirstOperator  GATE NU Operator1,SecondOperator
+	           SEIZE Operator1
+	           ADVANCE 20,5
+	           RELEASE Operator1
+	           TRANSFER ,FirstComputer
+SecondOperator GATE NU Operator2,ThirdOperator
+	           SEIZE Operator2
+	           ADVANCE 40,10
+	           RELEASE Operator2
+	           TRANSFER ,FirstComputer
+ThirdOperator  GATE NU Operator3,ProcessFailed
+	           SEIZE Operator3
+	           ADVANCE 40,20
+	           RELEASE Operator3
+	           TRANSFER ,SecondComputer
+
+FirstComputer  QUEUE FirstQueue
+               SEIZE Computer1
+               DEPART FirstQueue
+		       ADVANCE 15
+		       RELEASE Computer1
+		       TRANSFER ,ProcessSuccess
+SecondComputer QUEUE SecondQueue
+               SEIZE Computer2
+               DEPART SecondQueue
+		       ADVANCE 30
+		       RELEASE Computer2
+		       TRANSFER ,ProcessSuccess
+
+ProcessSuccess TRANSFER ,Finish
+ProcessFailed  TRANSFER ,Finish
+
+Finish         SAVEVALUE FailProb,(n$ProcessFailed/(n$ProcessSuccess+n$ProcessFailed))
+               TERMINATE 1
+	           START 300
